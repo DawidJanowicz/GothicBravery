@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gothic Bravery</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0b08;
+    --parchment: #1a1509;
+    --gold: #c9a84c;
+    --gold-light: #e8c96a;
+    --gold-dim: #7a6030;
+    --red: #8b2020;
+    --red-bright: #c0392b;
+    --green: #1e5c2e;
+    --green-bright: #27ae60;
+    --text: #d4c4a0;
+    --text-dim: #7a6f5a;
+    --border: #3a2e1a;
+    --card-bg: #110f0a;
+    --glow: rgba(201,168,76,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Crimson Pro', Georgia, serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /*BG*/
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 40% at 50% 0%, rgba(201,168,76,0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 60% at 10% 50%, rgba(139,32,32,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 60% at 90% 50%, rgba(30,92,46,0.04) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 20px 60px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(1.4rem, 4vw, 2.2rem);
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(201,168,76,0.4), 0 2px 4px rgba(0,0,0,0.8);
+    letter-spacing: 0.04em;
+    line-height: 1.3;
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 1rem;
+    font-style: italic;
+    letter-spacing: 0.1em;
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px auto;
+    max-width: 400px;
+  }
+  .divider-line { flex: 1; height: 1px; background: linear-gradient(to right, transparent, var(--gold-dim), transparent); }
+  .divider-gem { color: var(--gold); font-size: 0.7rem; }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(to right, transparent, var(--gold-dim), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .card.revealed::before { opacity: 1; }
+  .card.revealed { border-color: #2a2010; box-shadow: 0 0 20px rgba(201,168,76,0.05); }
+
+  .card-label {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .card-value {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text);
+    min-height: 28px;
+    transition: color 0.3s;
+  }
+
+  .card-value.empty {
+    color: var(--text-dim);
+    font-style: italic;
+    font-weight: 300;
+    font-size: 0.95rem;
+  }
+
+  .card-value.szpon-tak { color: var(--green-bright); }
+  .card-value.szpon-nie { color: var(--red-bright); }
+
+  /* Spin animation */
+  @keyframes spin-reveal {
+    0% { opacity: 0; transform: translateY(6px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .card-value.animating {
+    animation: spin-reveal 0.3s ease forwards;
+  }
+
+  .roll-wrap {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .btn-roll {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+    color: var(--bg);
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
+    border: none;
+    padding: 16px 48px;
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 20px rgba(201,168,76,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+  }
+
+  .btn-roll:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(201,168,76,0.45), inset 0 1px 0 rgba(255,255,255,0.2);
+  }
+
+  .btn-roll:active { transform: translateY(0); }
+
+  .btn-roll::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.15), transparent);
+    pointer-events: none;
+  }
+
+  .warning-box {
+    background: rgba(139,32,32,0.12);
+    border: 1px solid rgba(139,32,32,0.4);
+    border-radius: 4px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    color: #e08080;
+    display: none;
+  }
+  .warning-box.visible { display: block; }
+  .warning-box strong { color: #f0a0a0; }
+
+
+  .info-section {
+    margin-top: 40px;
+    border-top: 1px solid var(--border);
+    padding-top: 28px;
+  }
+
+  .info-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--gold-dim);
+    margin-bottom: 16px;
+  }
+
+  .dep-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 8px;
+  }
+
+  .dep-item {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    padding: 6px 10px;
+    border-left: 2px solid var(--border);
+  }
+
+  .dep-item strong { color: var(--text); }
+
+  @keyframes shimmer {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .card.rolling .card-value { animation: shimmer 0.15s infinite; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1 class="title">⚔ GOTHIC BRAVERY ⚔</h1>
+    <div class="divider">
+      <div class="divider-line"></div>
+      <div class="divider-gem">✦</div>
+      <div class="divider-line"></div>
+    </div>
+    <p class="subtitle">Naciśnij przycisk by poznać swój los</p>
+  </header>
+
+  <div class="roll-wrap">
+    <button class="btn-roll" onclick="rollAll()">✦ Losuj ✦</button>
+  </div>
+
+  <div id="warningBox" class="warning-box"></div>
+
+  <div class="results-grid">
+    <div class="card" id="card-gildia">
+      <div class="card-label">Gildia</div>
+      <div class="card-value empty" id="val-gildia">— nie wylosowano —</div>
+    </div>
+    <div class="card" id="card-pomoclaresa">
+      <div class="card-label">Pomoc Laresa z Gildia</div>
+      <div class="card-value empty" id="val-pomoclaresa">— nie wylosowano —</div>
+    </div>
+    <div class="card" id="card-szpon">
+      <div class="card-label">Szpon Beliara</div>
+      <div class="card-value empty" id="val-szpon">— nie wylosowano —</div>
+    </div>
+    <div class="card" id="card-bron">
+      <div class="card-label">Używana Broń</div>
+      <div class="card-value empty" id="val-bron">— nie wylosowano —</div>
+    </div>
+    <div class="card" id="card-forbiddenbron">
+      <div class="card-label">Zabroniona Broń</div>
+      <div class="card-value empty" id="val-forbiddenbron">— nie wylosowano —</div>
+    </div>
+    <div class="card" id="card-zwoj">
+      <div class="card-label">Zwoje</div>
+      <div class="card-value empty" id="val-zwoj">— nie wylosowano —</div>
+    </div>
+    <div class="card" id="card-mustskill">
+      <div class="card-label">Wymagana Umiejętność</div>
+      <div class="card-value empty" id="val-mustskill">— nie wylosowano —</div>
+    </div>
+    <div class="card" id="card-forbiddenskill">
+      <div class="card-label">Zabroniona Umiejętność</div>
+      <div class="card-value empty" id="val-forbiddenskill">— nie wylosowano —</div>
+    </div>
+  </div>
+
+
+</div>
+
+<script>
+//DATA
+
+const GILDIES = [
+  'Strażnik/Paladyn',
+  'Najemnik/Łowca Smoków',
+  'Nowicjusz/Mag Ognia'
+];
+
+const BRONIE = [
+  'Jednoręczne',
+  'Dwuręczne',
+  'Kusza',
+  'Łuk',
+  'Magia Wody',
+  'Magia Ognia'
+];
+
+// Skills (all possible)
+const SKILLS_ALCHEMIA = [
+  'esencja lecznicza',
+  'ekstrakt leczniczy',
+  'eliksir leczniczy',
+  'eliksir życia',
+  'esencja many',
+  'ekstrakt many',
+  'eliksir many',
+  'eliksir ducha',
+  'eliksir siły',
+  'eliksir zręczności',
+  'mikstura szybkości',
+];
+
+const SKILLS_ZBIERACTWO = [
+  'skóry',
+  'żądła krwiopijców',
+  'skrzydła krwiopijców',
+  'pazury',
+  'żuwaczki',
+  'róg cieniostworów',
+  'kły',
+  'serca',
+  'płyty pełzaczy',
+  'języki ognistych jaszczurów',
+  'rogi smoczych zębaczy',
+  'smocze łuski',
+  'smocza krew',
+  'skóry gadów',
+];
+
+const SKILLS_ZLODZIEJSKIE = [
+  'skradanie się',
+  'kradzież kieszonkowa',
+  'otwieranie zamków',
+];
+
+// TYLKO dla Najemnik/Łowca Smoków
+const SKILLS_MIECZE_NAJEMNIK = [
+  'długi magiczny miecz',
+  'magiczny miecz dwuręczny',
+  'magiczny miecz półtoraręczny',
+  'ciężki magiczny miecz dwuręczny',
+  'magiczne ostrze bojowe',
+  'ciężkie magiczne ostrze bojowe',
+  'magiczne ostrze na smoki',
+  'duże magiczne ostrze na smoki',
+];
+
+// Miecze dla wszystkich gildi
+const SKILLS_MIECZE_OGOLNE = [
+  'miecz',
+  'dobry miecz',
+  'dobry długi miecz',
+  'rubinowe ostrze',
+  'el bastardo',
+];
+
+const ALL_SKILLS_BASE = [
+  ...SKILLS_ALCHEMIA,
+  ...SKILLS_ZBIERACTWO,
+  ...SKILLS_ZLODZIEJSKIE,
+  ...SKILLS_MIECZE_OGOLNE,
+];
+
+const ALL_SKILLS_NAJEMNIK = [
+  ...ALL_SKILLS_BASE,
+  ...SKILLS_MIECZE_NAJEMNIK,
+];
+
+// Dla animacji shuffla – pełna pula
+const ALL_SKILLS = ALL_SKILLS_NAJEMNIK;
+
+const SKILL_DEPS = {
+  'ekstrakt leczniczy':  [['esencja lecznicza']],
+  'eliksir leczniczy':   [['ekstrakt leczniczy', 'esencja lecznicza']],
+  'eliksir życia':       [['eliksir leczniczy', 'ekstrakt leczniczy', 'esencja lecznicza']],
+  'ekstrakt many':       [['esencja many']],
+  'eliksir many':        [['ekstrakt many', 'esencja many']],
+  'eliksir ducha':       [['eliksir many', 'ekstrakt many', 'esencja many']],
+  'eliksir siły':        [['esencja lecznicza'], ['esencja many']],
+  'eliksir zręczności':  [['esencja lecznicza'], ['esencja many']],
+  'mikstura szybkości':  [['esencja lecznicza'], ['esencja many']],
+};
+
+const ZWOJE = [
+  'Ogień', 'Woda', 'Przywoływanie', 'Przemiana', 'NIC', 'WSZYSTKO'
+];
+
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function pickExcluding(arr, excluded) {
+  const filtered = arr.filter(x => x !== excluded);
+  if (filtered.length === 0) return null;
+  return pick(filtered);
+}
+
+function isAchievable(skillName, forbiddenSet) {
+  if (forbiddenSet.has(skillName)) return false; 
+  const paths = SKILL_DEPS[skillName];
+  if (!paths) return true; 
+  return paths.some(path => path.every(dep => !forbiddenSet.has(dep)));
+}
+
+function rollAll() {
+  clearWarning();
+
+  const isNajemnik = (g) => g === 'Najemnik/Łowca Smoków';
+
+  const gildia = pick(GILDIES);
+
+  const pomocLaresa = Math.random() < 0.5 ? 'TAK' : 'NIE';
+
+  const bron = pick(BRONIE);
+
+  const forbiddenBron = pickExcluding(BRONIE, bron);
+
+  const mustPool = isNajemnik(gildia) ? ALL_SKILLS_NAJEMNIK : ALL_SKILLS_BASE;
+  const forbiddenPool = isNajemnik(gildia) ? ALL_SKILLS_NAJEMNIK : ALL_SKILLS_BASE;
+
+  const forbiddenSkill = pick(forbiddenPool);
+  const forbiddenSet = new Set([forbiddenSkill]);
+
+  let mustCandidates = mustPool.filter(s => isAchievable(s, forbiddenSet));
+
+  let mustSkill = null;
+  let warnings = [];
+
+  if (mustCandidates.length === 0) {
+    warnings.push('Nie można wylosować Must Skill – wszystkie skille zablokowane przez Forbidden Skill.');
+    mustSkill = '— brak możliwych opcji —';
+  } else {
+    mustSkill = pick(mustCandidates);
+  }
+
+  const szpon = Math.random() < 0.5 ? 'TAK' : 'NIE';
+
+  const zwoj = pick(ZWOJE);
+
+  const sequence = [
+    { id: 'gildia',        value: gildia,                          extraClass: '' },
+    { id: 'pomoclaresa',   value: pomocLaresa,                     extraClass: pomocLaresa === 'TAK' ? 'szpon-tak' : 'szpon-nie' },
+    { id: 'szpon',         value: szpon,                           extraClass: szpon === 'TAK' ? 'szpon-tak' : 'szpon-nie' },
+    { id: 'bron',          value: bron,                            extraClass: '' },
+    { id: 'forbiddenbron', value: forbiddenBron || '— brak opcji —', extraClass: '' },
+    { id: 'zwoj',          value: zwoj,                            extraClass: '' },
+    { id: 'mustskill',     value: capitalize(mustSkill),           extraClass: '' },
+    { id: 'forbiddenskill',value: capitalize(forbiddenSkill),      extraClass: '' },
+  ];
+
+  const CARD_DURATION = 900; // opoznienie w ms
+
+  sequence.forEach((item, i) => {
+    setTimeout(() => {
+      animateReveal(item.id, item.value, item.extraClass);
+      if (i === sequence.length - 1 && warnings.length) {
+        setTimeout(() => showWarning(warnings.join('<br>')), CARD_DURATION);
+      }
+    }, i * CARD_DURATION);
+  });
+}
+
+function capitalize(str) {
+  if (!str) return str;
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function animateReveal(id, value, extraClass = '') {
+  const card = document.getElementById('card-' + id);
+  const val = document.getElementById('val-' + id);
+
+  card.classList.add('rolling');
+  card.classList.remove('revealed');
+
+  let ticks = 0;
+  const maxTicks = 8 + Math.floor(Math.random() * 6);
+  const allVals = getPoolForId(id);
+
+  const interval = setInterval(() => {
+    val.textContent = capitalize(pick(allVals));
+    val.className = 'card-value';
+    ticks++;
+    if (ticks >= maxTicks) {
+      clearInterval(interval);
+      card.classList.remove('rolling');
+      card.classList.add('revealed');
+      val.textContent = value;
+      val.className = 'card-value animating' + (extraClass ? ' ' + extraClass : '');
+      setTimeout(() => val.classList.remove('animating'), 400);
+    }
+  }, 80);
+}
+
+function getPoolForId(id) {
+  switch(id) {
+    case 'gildia': return GILDIES;
+    case 'pomoclaresa': return ['TAK', 'NIE'];
+    case 'bron': return BRONIE;
+    case 'forbiddenbron': return BRONIE;
+    case 'mustskill': return ALL_SKILLS;
+    case 'forbiddenskill': return ALL_SKILLS;
+    case 'szpon': return ['TAK', 'NIE'];
+    case 'zwoj': return ZWOJE;
+    default: return ['…'];
+  }
+}
+
+function showWarning(msg) {
+  const box = document.getElementById('warningBox');
+  box.innerHTML = '<strong>⚠ Uwaga:</strong> ' + msg;
+  box.classList.add('visible');
+}
+
+function clearWarning() {
+  const box = document.getElementById('warningBox');
+  box.classList.remove('visible');
+  box.innerHTML = '';
+}
+</script>
+</body>
+</html>
